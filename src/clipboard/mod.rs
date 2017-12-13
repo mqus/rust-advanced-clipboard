@@ -6,12 +6,13 @@ use std::vec::Vec;
 use std::cell::RefCell;
 use std::rc::{Weak,Rc};
 use mime::Mime;
-
+use std::str::FromStr;
+use std::fmt;
 pub trait ClipboardOwner{
     fn lost_ownership(&mut self, source:&Clipboard, new_content:Option<&Transferable>);
 }
 
-pub trait Transferable{
+pub trait Transferable: fmt::Debug{
     fn get_data_flavours(&self)->&[Mime];
     fn is_flavour_supported(&self,flavour: &Mime) ->bool{
         self.get_data_flavours().contains(flavour)
@@ -19,7 +20,7 @@ pub trait Transferable{
     fn get_data(&self,flavour:&Mime)->&[u8];
 }
 
-pub trait ClipboardObserver{
+pub trait ClipboardObserver: fmt::Debug{
     fn clipboard_changed(&mut self);
 }
 
@@ -105,6 +106,23 @@ impl Clipboard{
             }
         });
     }
+}
 
+#[test]
+fn create(){
+    let c=Clipboard::new("1".to_string());
+
+    assert!(match c.get_contents() {
+        None => {true},
+        Some(_) => {false},
+    });
+    assert!(match c.get_data(&Mime::from_str("text/plain").expect("noMime")) {
+        Ok(_) => false,
+        Err(_) => true,
+    });
+
+    assert_eq!(c.available_data_flavours().len(),0)
 
 }
+
+
